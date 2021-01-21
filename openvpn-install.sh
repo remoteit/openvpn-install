@@ -1172,15 +1172,22 @@ function revokeClient() {
 			read -rp "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
 		fi
 	done
+	echo "Revoking CLIENTNUMBER = $CLIENTNUMBER"
 	CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
+	echo "Revoking CLIENT = $CLIENT"
 	cd /etc/openvpn/easy-rsa/ || return
 	./easyrsa --batch revoke "$CLIENT"
 	EASYRSA_CRL_DAYS=3650 ./easyrsa gen-crl
+	echo "Removing crl.pem"
 	rm -f /etc/openvpn/crl.pem
+	echo "Copying crl.pem"
 	cp /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
 	chmod 644 /etc/openvpn/crl.pem
+	echo "Deleting $CLIENT.ovpn"
 	find /home/ -maxdepth 2 -name "$CLIENT.ovpn" -delete
+	echo "Deleting root $CLIENT.ovpn"
 	rm -f "/root/$CLIENT.ovpn"
+	echo "Removing $CLIENT from /etc/openvpn/ipp.txt"
 	sed -i "/^$CLIENT,.*/d" /etc/openvpn/ipp.txt
 
 	echo ""
