@@ -602,8 +602,7 @@ function installQuestions() {
 }
 
 function installOpenVPN() {
-	if [[ $AUTO_INSTALL == "y" ]]; then
-		# Set default choices so that no questions will be asked.
+1G		# Set default choices so that no questions will be asked.
 		APPROVE_INSTALL=${APPROVE_INSTALL:-y}
 		APPROVE_IP=${APPROVE_IP:-y}
 		IPV6_SUPPORT=${IPV6_SUPPORT:-n}
@@ -1165,15 +1164,17 @@ function revokeClient() {
 	echo ""
 	echo "Select the existing client certificate you want to revoke"
 	tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | nl -s ') '
-	until [[ $CLIENTNUMBER -ge 1 && $CLIENTNUMBER -le $NUMBEROFCLIENTS ]]; do
-		if [[ $CLIENTNUMBER == '1' ]]; then
-			read -rp "Select one client [1]: " CLIENTNUMBER
-		else
-			read -rp "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
-		fi
+	until [[ $CLIENT =~ ^[a-zA-Z0-9_-]+$ ]]; do
+		until [[ $CLIENTNUMBER -ge 1 && $CLIENTNUMBER -le $NUMBEROFCLIENTS ]]; do
+			if [[ $CLIENTNUMBER == '1' ]]; then
+				read -rp "Select one client [1]: " CLIENTNUMBER
+			else
+				read -rp "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
+			fi
+		done
+		echo "Revoking CLIENTNUMBER = $CLIENTNUMBER"
+		CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
 	done
-	echo "Revoking CLIENTNUMBER = $CLIENTNUMBER"
-	CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
 	echo "Revoking CLIENT = $CLIENT"
 	cd /etc/openvpn/easy-rsa/ || return
 	./easyrsa --batch revoke "$CLIENT"
