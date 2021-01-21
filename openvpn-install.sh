@@ -1165,15 +1165,17 @@ function revokeClient() {
 	echo ""
 	echo "Select the existing client certificate you want to revoke"
 	tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | nl -s ') '
-	until [[ $CLIENTNUMBER -ge 1 && $CLIENTNUMBER -le $NUMBEROFCLIENTS ]]; do
-		if [[ $CLIENTNUMBER == '1' ]]; then
-			read -rp "Select one client [1]: " CLIENTNUMBER
-		else
-			read -rp "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
-		fi
-	done
-	echo "Revoking CLIENTNUMBER = $CLIENTNUMBER"
-	CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
+	if [ -z "$CLIENT" ]; then
+		until [[ $CLIENTNUMBER -ge 1 && $CLIENTNUMBER -le $NUMBEROFCLIENTS ]]; do
+			if [[ $CLIENTNUMBER == '1' ]]; then
+				read -rp "Select one client [1]: " CLIENTNUMBER
+			else
+				read -rp "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
+			fi
+		done
+		echo "Revoking CLIENTNUMBER = $CLIENTNUMBER"
+		CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
+	fi
 	echo "Revoking CLIENT = $CLIENT"
 	cd /etc/openvpn/easy-rsa/ || return
 	./easyrsa --batch revoke "$CLIENT"
